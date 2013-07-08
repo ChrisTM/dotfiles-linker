@@ -25,6 +25,18 @@ def link_dotfiles(src_dir, dst_dir):
             print "{}: Linked.".format(dotfile_name)
 
 
+# TODO: Support a new use case. Example: a user already has a .ssh dir with
+# their keyfiles. The /contents/ of dotfiles/.ssh should be linked; not the
+# directory itself. I'd like `link_dotfiles` to call this function (instead of
+# doing the linking itself). This function will look to see if directories in
+# dotfiles/ contain a file named '.dotfiles_subdir'. If it does, instead of
+# linking the directory, it'll recursively call link_contents on that
+# directory.
+def link_contents(src_dir, dst_dir):
+    """Create links in dst_dir that point to the contents in src_dir."""
+    pass
+
+
 if __name__ == "__main__":
     script_dir = abspath(dirname(__file__))
     default_dotfiles_dir = join(script_dir, 'dotfiles')
