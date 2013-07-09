@@ -28,8 +28,7 @@ def link(target, link, root_dir='.'):
     # instead of `target` in output because it's shorter.
     rel_name = path.relpath(target, root_dir)
 
-    if (os.path.islink(link) and
-            os.path.realpath(link) == os.path.realpath(target)):
+    if path.islink(link) and path.realpath(link) == path.realpath(target):
         print "{}:\tAlready linked.".format(rel_name)
         return
 
