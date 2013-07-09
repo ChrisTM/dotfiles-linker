@@ -4,7 +4,6 @@ import argparse
 
 import os
 from os import path
-from os.path import abspath, dirname, join, expanduser
 
 # Directories containing a file with this name will not be linked; their
 # contents will be linked instead
@@ -42,9 +41,9 @@ def link_contents(src_dir, dst_dir, root_dir='.'):
     contents and not the directory itself should be linked. Now the user's
     private keys can exist as siblings of any linked config files.
     """
-    src_dir = abspath(src_dir)
-    dst_dir = abspath(dst_dir)
-    root_dir = abspath(root_dir)
+    src_dir = path.abspath(src_dir)
+    dst_dir = path.abspath(dst_dir)
+    root_dir = path.abspath(root_dir)
 
     if not path.exists(dst_dir):
         print "{}:\tDotfiles subdir created."
@@ -54,8 +53,8 @@ def link_contents(src_dir, dst_dir, root_dir='.'):
         if name == SUBDIR_ANNOTATION:
             continue
 
-        src_path = join(src_dir, name)
-        dst_path = join(dst_dir, name)
+        src_path = path.join(src_dir, name)
+        dst_path = path.join(dst_dir, name)
 
         if path.isdir(src_path) and SUBDIR_ANNOTATION in os.listdir(src_path):
             link_contents(src_path, dst_path, root_dir=root_dir)
@@ -64,8 +63,8 @@ def link_contents(src_dir, dst_dir, root_dir='.'):
 
 
 if __name__ == "__main__":
-    script_dir = abspath(dirname(__file__))
-    default_dotfiles_dir = join(script_dir, 'dotfiles')
+    script_dir = path.abspath(path.dirname(__file__))
+    default_dotfiles_dir = path.join(script_dir, 'dotfiles')
 
     parser = argparse.ArgumentParser(
         description='Link your dotfiles into your home directory.',
@@ -79,7 +78,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    src_dir = abspath(args.dotfiles_dir)
-    dst_dir = abspath(expanduser('~'))
+    src_dir = path.abspath(args.dotfiles_dir)
+    dst_dir = path.abspath(path.expanduser('~'))
 
     link_contents(src_dir, dst_dir, root_dir=src_dir)
