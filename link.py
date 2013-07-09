@@ -46,7 +46,8 @@ def link_contents(src_dir, dst_dir, root_dir='.'):
     root_dir = path.abspath(root_dir)
 
     if not path.exists(dst_dir):
-        print "{}:\tDotfiles subdir created."
+        rel_name = path.relpath(src_dir, root_dir)
+        print "{}:\tDotfiles subdir created.".format(rel_name)
         os.mkdir(dst_dir)
 
     for name in os.listdir(src_dir):
