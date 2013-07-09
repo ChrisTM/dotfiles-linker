@@ -17,6 +17,12 @@ def link(target, link, root_dir='.'):
     # Name of the current dotfile, as relative to the dotfiles dir. We use this
     # instead of `target` in output because it's shorter.
     rel_name = path.relpath(target, root_dir)
+
+    if (os.path.islink(link) and
+            os.path.realpath(link) == os.path.realpath(target)):
+        print "{}:\tAlready linked.".format(rel_name)
+        return
+
     try:
         os.symlink(target, link)
     except Exception as e:
