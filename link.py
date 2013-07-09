@@ -26,10 +26,10 @@ def link(target, link, root_dir='.'):
     """
     # Name of the current dotfile, as relative to the dotfiles dir. We use this
     # instead of `target` in output because it's shorter.
-    rel_name = path.relpath(target, root_dir)
+    display_name = path.relpath(target, root_dir)
 
     if path.islink(link) and path.realpath(link) == path.realpath(target):
-        print "{}:\tAlready linked.".format(rel_name)
+        print "{}:\tAlready linked.".format(display_name)
         return
 
     try:
@@ -42,11 +42,11 @@ def link(target, link, root_dir='.'):
                 diff_msg = 'an identical'
 
             print "{}:\tNot linked --- {} file already exists.".format(
-                rel_name, diff_msg)
+                display_name, diff_msg)
         else:
-            print "{}:\tNot linked ({})".format(rel_name, e)
+            print "{}:\tNot linked ({})".format(display_name, e)
     else:
-        print "{}:\tLinked.".format(rel_name)
+        print "{}:\tLinked.".format(display_name)
 
 
 def link_contents(src_dir, dst_dir, root_dir='.'):
@@ -70,9 +70,9 @@ def link_contents(src_dir, dst_dir, root_dir='.'):
     root_dir = path.abspath(root_dir)
 
     if not path.exists(dst_dir):
-        rel_name = path.relpath(src_dir, root_dir)
-        print "{}:\tDotfiles subdir created.".format(rel_name)
+        display_name = path.relpath(src_dir, root_dir)
         os.mkdir(dst_dir)
+        print "{}:\tSubdir created.".format(display_name)
 
     for name in os.listdir(src_dir):
         if name == SUBDIR_ANNOTATION:
