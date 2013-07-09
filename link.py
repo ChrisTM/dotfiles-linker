@@ -2,12 +2,22 @@
 
 import argparse
 
+import errno
+import filecmp
 import os
 from os import path
 
 # Directories containing a file with this name will not be linked; their
 # contents will be linked instead
 SUBDIR_ANNOTATION = ".dotfiles_subdir"
+
+
+def files_differ(path_a, path_b):
+    """
+    Return True if the files at `path_a` and `path_b` have different
+    content.
+    """
+    return not filecmp.cmp(path_a, path_b)
 
 
 def link(target, link, root_dir='.'):
@@ -26,7 +36,16 @@ def link(target, link, root_dir='.'):
     try:
         os.symlink(target, link)
     except Exception as e:
-        print "{}:\tNot linked. ({})".format(rel_name, e)
+        if e.errno == errno.EEXIST:
+            if files_differ(target, link):
+                diff_msg = 'a different'
+            else:
+                diff_msg = 'an identical'
+
+            print "{}:\tNot linked --- {} file already exists.".format(
+                rel_name, diff_msg)
+        else:
+            print "{}:\tNot linked ({})".format(rel_name, e)
     else:
         print "{}:\tLinked.".format(rel_name)
 
