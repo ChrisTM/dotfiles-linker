@@ -2,6 +2,7 @@
 
 import argparse
 
+from collections import defaultdict, OrderedDict
 import errno
 import filecmp
 import os
@@ -9,21 +10,34 @@ from os import path
 
 # Directories containing a file with this name will not be linked; their
 # contents will be linked instead
-SUBDIR_ANNOTATION = ".dotfiles_subdir"
+SUBDIR_ANNOTATION = '.dotfiles_subdir'
 
 
 def files_differ(path_a, path_b):
     """
-    Return True if the files at `path_a` and `path_b` have different
-    content.
+    True if the files at `path_a` and `path_b` have different content.
     """
     return not filecmp.cmp(path_a, path_b)
 
 
 class Linker(object):
-    def __init__(self, src_dir, dst_dir):
+    RESULT_DESCRIPTIONS = OrderedDict([
+        ('subdir.created', 'Subdirs created'),
+        ('subdir.exists', 'Subdirs already created'),
+        ('subdir.not-created', 'Subdirs not created'),
+
+        ('link.created', 'Links created'),
+        ('link.exists', 'Links already created'),
+        ('link.not-created', 'Links not created'),
+    ])
+    RESULT_TYPES = RESULT_DESCRIPTIONS.keys()
+
+    def __init__(self, src_dir, dst_dir, show_progress=False):
         self.src_dir = path.abspath(src_dir)
         self.dst_dir = path.abspath(dst_dir)
+        self.show_progress = show_progress
+
+        self.results = []  # tuples of form (result, path, reason)
 
     def run(self):
         self._link_contents(self.src_dir, self.dst_dir)
@@ -32,12 +46,8 @@ class Linker(object):
         """
         Create a symbolic link named `link` that points to `target`.
         """
-        # Name of the current dotfile, as relative to the dotfiles dir. We use this
-        # instead of `target` in output because it's shorter.
-        display_name = path.relpath(target, self.src_dir)
-
         if path.islink(link) and path.realpath(link) == path.realpath(target):
-            print "{}:\tAlready linked.".format(display_name)
+            self._add_result('link.exists', link)
             return
 
         try:
@@ -45,16 +55,15 @@ class Linker(object):
         except Exception as e:
             if e.errno == errno.EEXIST:
                 if files_differ(target, link):
-                    diff_msg = 'a different'
+                    reason = 'a different file already exists'
                 else:
-                    diff_msg = 'an identical'
+                    reason = 'an identical file already exists'
 
-                print "{}:\tNot linked --- {} file already exists.".format(
-                    display_name, diff_msg)
+                self._add_result('link.not-created', link, reason=reason)
             else:
-                print "{}:\tNot linked ({})".format(display_name, e)
+                self._add_result('link.not-created', link, reason=e)
         else:
-            print "{}:\tLinked.".format(display_name)
+            self._add_result('link.created', link)
 
 
     def _link_contents(self, src_dir, dst_dir):
@@ -75,10 +84,17 @@ class Linker(object):
         and not the directory itself should be linked. Now the user's private
         keys can exist as siblings of any linked config files.
         """
-        if not path.exists(dst_dir):
-            display_name = path.relpath(src_dir, self.src_dir)
+        if path.exists(dst_dir):
+            if path.isdir(dst_dir):
+                self._add_result('subdir.exists', dst_dir)
+            else:
+                self._add_result(
+                    'subdir.not-created', dst_dir,
+                    reason='something already exists here'
+                )
+        else:
             os.mkdir(dst_dir)
-            print "{}:\tSubdir created.".format(display_name)
+            self._add_result('subdir.created', dst_dir)
 
         for name in os.listdir(src_dir):
             if name == SUBDIR_ANNOTATION:
@@ -93,7 +109,49 @@ class Linker(object):
             else:
                 self._link(src_path, dst_path)
 
-if __name__ == "__main__":
+    def _add_result(self, type, path, reason=None):
+        """
+        Remember that `result` happened while trying to create the link or
+        subdir at `path`.
+        """
+        assert type in self.RESULT_TYPES
+
+        self.results.append({'type':type, 'path':path, 'reason':reason})
+
+        if self.show_progress:
+            template = (
+                '{type} (reason}: {path}' if reason else '{type}: {path}'
+            )
+            print template.format(type=type, path=path, reason=reason)
+
+    def summary(self):
+        """
+        Return a string summarizing the results of a linking run.
+        """
+        lines_by_type = defaultdict(list)
+        for result in self.results:
+            if result['reason']:
+                line_template = '  {path} ({reason})'
+            else:
+                line_template = '  {path}'
+            lines_by_type[result['type']].append(
+                line_template.format(**result)
+            )
+
+        lines = []
+        for type in self.RESULT_TYPES:
+            # only output if we have lines for this result type and if the
+            # result type is one that affects the filesystem (*.exists do not).
+            if type in lines_by_type and not type.endswith('.exists'):
+                lines.append(self.RESULT_DESCRIPTIONS[type])
+                lines.extend(lines_by_type[type])
+
+        summary = '\n'.join(lines)
+
+        return summary or 'Everything is linked. No changes made.'
+
+
+if __name__ == '__main__':
     script_dir = path.abspath(path.dirname(__file__))
     default_dotfiles_dir = path.join(script_dir, 'dotfiles')
 
@@ -114,3 +172,5 @@ if __name__ == "__main__":
 
     linker = Linker(src_dir, dst_dir)
     linker.run()
+
+    print linker.summary()
