@@ -164,13 +164,24 @@ if __name__ == '__main__':
         help='the directory containing the dotfiles that you want to install',
         default=default_dotfiles_dir,
     )
+    parser.add_argument(
+        '-v', '--show-progress',
+        help='print status messages while linking',
+        action='store_true',
+        default=False,
+    )
 
     args = parser.parse_args()
 
     src_dir = path.abspath(args.dotfiles_dir)
     dst_dir = path.abspath(path.expanduser('~'))
 
-    linker = Linker(src_dir, dst_dir)
+    linker = Linker(src_dir, dst_dir, show_progress=args.show_progress)
     linker.run()
+
+
+    # print a blank line to differentiate progress messages from the summary
+    if args.show_progress:
+        print
 
     print linker.summary()
