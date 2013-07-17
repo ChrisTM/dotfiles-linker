@@ -160,35 +160,44 @@ class Linker(object):
 
 if __name__ == '__main__':
     script_dir = path.abspath(path.dirname(__file__))
-    default_dotfiles_dir = path.join(script_dir, 'dotfiles')
+
+    default_src_dir = path.join(script_dir, 'dotfiles')
+    default_dst_dir = path.abspath(path.expanduser('~'))
 
     parser = argparse.ArgumentParser(
         description='Link your dotfiles into your home directory.',
     )
     parser.add_argument(
-        '--dotfiles-dir',
+        '--src-dir',
         metavar='DIR',
-        help='the directory containing the dotfiles that you want to install',
-        default=default_dotfiles_dir,
+        help='The directory containing the dotfiles you want to link. (default: %(default)s)',
+        default=default_src_dir,
     )
     parser.add_argument(
-        '-v', '--show-progress',
-        help='print status messages while linking',
+        '--dst-dir',
+        metavar='DIR',
+        help='The directory where you want to link the dotfiles. (default: %(default)s)',
+        default=default_dst_dir,
+    )
+    parser.add_argument(
+        '-v', '--progress',
+        help='Print status messages while linking.',
         action='store_true',
         default=False,
     )
 
     args = parser.parse_args()
 
-    src_dir = path.abspath(args.dotfiles_dir)
-    dst_dir = path.abspath(path.expanduser('~'))
+    linker = Linker(
+        src_dir=args.src_dir,
+        dst_dir=args.dst_dir,
+        show_progress=args.progress,
+    )
 
-    linker = Linker(src_dir, dst_dir, show_progress=args.show_progress)
     linker.run()
 
-
     # print a blank line to differentiate progress messages from the summary
-    if args.show_progress:
+    if args.progress:
         print
 
     print linker.summary()
