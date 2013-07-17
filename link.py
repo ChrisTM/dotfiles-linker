@@ -32,6 +32,9 @@ class Linker(object):
     ])
     RESULT_TYPES = RESULT_DESCRIPTIONS.keys()
 
+    # used for pretty-printing
+    _max_type_width = max(map(len, RESULT_TYPES))
+
     def __init__(self, src_dir, dst_dir, show_progress=False):
         self.src_dir = path.abspath(src_dir)
         self.dst_dir = path.abspath(dst_dir)
@@ -119,10 +122,14 @@ class Linker(object):
         self.results.append({'type':type, 'path':path, 'reason':reason})
 
         if self.show_progress:
-            template = (
-                '{type} (reason}: {path}' if reason else '{type}: {path}'
-            )
-            print template.format(type=type, path=path, reason=reason)
+            if reason:
+                template = '{type:<{type_width}} {path} ({reason})'
+            else:
+                template = '{type:<{type_width}} {path}'
+
+            print template.format(
+                type=type, path=path, reason=reason,
+                type_width=self._max_type_width)
 
     def summary(self):
         """
