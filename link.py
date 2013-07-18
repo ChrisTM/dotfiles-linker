@@ -190,12 +190,22 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # verify that --src-dir and --dst-dir exist
+    some_dirs_do_not_exist = False
+    for dir_type, dir_path in [('--src-dir', args.src_dir),
+                               ('--dst-dir', args.dst_dir)]:
+        if not path.isdir(dir_path):
+            some_dirs_do_not_exist = True
+            print "Error: The {} directory {} does not exist.".format(
+                dir_type, dir_path)
+    if some_dirs_do_not_exist:
+        exit(1)
+
     linker = Linker(
         src_dir=args.src_dir,
         dst_dir=args.dst_dir,
         show_progress=args.progress,
     )
-
     linker.run()
 
     # print a blank line to differentiate progress messages from the summary
