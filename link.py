@@ -160,8 +160,11 @@ class Linker(object):
 if __name__ == '__main__':
     script_dir = path.abspath(path.dirname(__file__))
 
-    default_src_dir = path.join(script_dir, 'dotfiles')
     default_dst_dir = path.abspath(path.expanduser('~'))
+    # we guess their username from their home directory and assume they've got
+    # a folder in the dotfiles repo with that name
+    username = path.basename(default_dst_dir)
+    default_src_dir = path.join(script_dir, username)
 
     parser = argparse.ArgumentParser(
         description='Link your dotfiles into your home directory.',
