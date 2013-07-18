@@ -68,7 +68,6 @@ class Linker(object):
         else:
             self._add_result('link.created', link)
 
-
     def _link_contents(self, src_dir, dst_dir):
         """
         Create links in dst_dir that point to the contents in src_dir.
@@ -119,7 +118,7 @@ class Linker(object):
         """
         assert type in self.RESULT_TYPES
 
-        self.results.append({'type':type, 'path':path, 'reason':reason})
+        self.results.append({'type': type, 'path': path, 'reason': reason})
 
         if self.show_progress:
             if reason:
