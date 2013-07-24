@@ -8,9 +8,9 @@ import filecmp
 import os
 from os import path
 
-# Directories containing a file with this name will not be linked; their
-# contents will be linked instead
-SUBDIR_ANNOTATION = '.dotfiles_subdir'
+# Directories containing a file with this name will be linked to directly
+# instead of having its contents linked individually.
+SUBDIR_ANNOTATION = '.dotfiles-subdir'
 
 
 def files_differ(path_a, path_b):
@@ -106,7 +106,7 @@ class Linker(object):
             dst_path = path.join(dst_dir, name)
 
             if (path.isdir(src_path) and
-                    SUBDIR_ANNOTATION in os.listdir(src_path)):
+                    SUBDIR_ANNOTATION not in os.listdir(src_path)):
                 self._link_contents(src_path, dst_path)
             else:
                 self._link(src_path, dst_path)
