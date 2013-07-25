@@ -47,15 +47,21 @@ class Linker(object):
         """
         Create a symbolic link named `link` that points to `target`.
         """
-        if (os.path.islink(link) and
-                os.path.realpath(link) == os.path.realpath(target)):
-            self._add_result('link.exists', link)
+        if os.path.islink(link):
+            if os.path.realpath(link) == os.path.realpath(target):
+                self._add_result('link.exists', link)
+            elif os.path.exists(link):
+                self._add_result('link.not-created', link,
+                                 reason="a different link already exists")
+            else:
+                self._add_result('link.not-created', link,
+                                 reason="a broken link already exists")
             return
 
         try:
             os.symlink(target, link)
         except Exception as e:
-            if e.errno == errno.EEXIST:
+            if e.errno == errno.EEXIST:  # file already exists
                 if files_differ(target, link):
                     reason = 'a different file already exists'
                 else:
