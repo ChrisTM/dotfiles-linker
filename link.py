@@ -1,12 +1,10 @@
 #! /bin/env python
 
 import argparse
-
-from collections import defaultdict, OrderedDict
+import collections
 import errno
 import filecmp
 import os
-from os import path
 
 # Directories containing a file with this name will be linked to directly
 # instead of having its contents linked individually.
@@ -21,7 +19,7 @@ def files_differ(path_a, path_b):
 
 
 class Linker(object):
-    RESULT_DESCRIPTIONS = OrderedDict([
+    RESULT_DESCRIPTIONS = collections.OrderedDict([
         ('subdir.created', 'Subdirs created'),
         ('subdir.exists', 'Subdirs already created'),
         ('subdir.not-created', 'Subdirs not created'),
@@ -36,8 +34,8 @@ class Linker(object):
     _max_type_width = max(map(len, RESULT_TYPES))
 
     def __init__(self, src_dir, dst_dir, show_progress=False):
-        self.src_dir = path.abspath(src_dir)
-        self.dst_dir = path.abspath(dst_dir)
+        self.src_dir = os.path.abspath(src_dir)
+        self.dst_dir = os.path.abspath(dst_dir)
         self.show_progress = show_progress
 
         self.results = []  # tuples of form (result, path, reason)
@@ -49,7 +47,8 @@ class Linker(object):
         """
         Create a symbolic link named `link` that points to `target`.
         """
-        if path.islink(link) and path.realpath(link) == path.realpath(target):
+        if (os.path.islink(link) and
+                os.path.realpath(link) == os.path.realpath(target)):
             self._add_result('link.exists', link)
             return
 
@@ -86,8 +85,8 @@ class Linker(object):
         and not the directory itself should be linked. Now the user's private
         keys can exist as siblings of any linked config files.
         """
-        if path.exists(dst_dir):
-            if path.isdir(dst_dir):
+        if os.path.exists(dst_dir):
+            if os.path.isdir(dst_dir):
                 self._add_result('subdir.exists', dst_dir)
             else:
                 self._add_result(
@@ -102,10 +101,10 @@ class Linker(object):
             if name == SUBDIR_ANNOTATION:
                 continue
 
-            src_path = path.join(src_dir, name)
-            dst_path = path.join(dst_dir, name)
+            src_path = os.path.join(src_dir, name)
+            dst_path = os.path.join(dst_dir, name)
 
-            if (path.isdir(src_path) and
+            if (os.path.isdir(src_path) and
                     SUBDIR_ANNOTATION not in os.listdir(src_path)):
                 self._link_contents(src_path, dst_path)
             else:
@@ -134,7 +133,7 @@ class Linker(object):
         """
         Return a string summarizing the results of a linking run.
         """
-        lines_by_type = defaultdict(list)
+        lines_by_type = collections.defaultdict(list)
         for result in self.results:
             if result['reason']:
                 line_template = '  {path} ({reason})'
@@ -158,13 +157,13 @@ class Linker(object):
 
 
 if __name__ == '__main__':
-    script_dir = path.abspath(path.dirname(__file__))
+    script_dir = os.path.abspath(os.path.dirname(__file__))
 
-    default_dst_dir = path.abspath(path.expanduser('~'))
+    default_dst_dir = os.path.abspath(os.path.expanduser('~'))
     # we guess their username from their home directory and assume they've got
     # a folder in the dotfiles repo with that name
-    username = path.basename(default_dst_dir)
-    default_src_dir = path.join(script_dir, username)
+    username = os.path.basename(default_dst_dir)
+    default_src_dir = os.path.join(script_dir, username)
 
     parser = argparse.ArgumentParser(
         description='Link your dotfiles into your home directory.',
@@ -194,7 +193,7 @@ if __name__ == '__main__':
     some_dirs_do_not_exist = False
     for dir_type, dir_path in [('--src-dir', args.src_dir),
                                ('--dst-dir', args.dst_dir)]:
-        if not path.isdir(dir_path):
+        if not os.path.isdir(dir_path):
             some_dirs_do_not_exist = True
             print "Error: The {} directory {} does not exist.".format(
                 dir_type, dir_path)
