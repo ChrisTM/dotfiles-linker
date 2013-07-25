@@ -2,7 +2,6 @@
 
 import argparse
 import collections
-import errno
 import filecmp
 import os
 
@@ -56,22 +55,19 @@ class Linker(object):
             else:
                 self._add_result('link.not-created', link,
                                  reason="a broken link already exists")
-            return
-
-        try:
-            os.symlink(target, link)
-        except Exception as e:
-            if e.errno == errno.EEXIST:  # file already exists
-                if files_differ(target, link):
-                    reason = 'a different file already exists'
-                else:
-                    reason = 'an identical file already exists'
-
-                self._add_result('link.not-created', link, reason=reason)
+        elif os.path.isfile(link) or os.path.isdir(link):
+            if files_differ(target, link):
+                reason = 'a different file already exists'
             else:
-                self._add_result('link.not-created', link, reason=e)
+                reason = 'an identical file already exists'
+            self._add_result('link.not-created', link, reason=reason)
         else:
-            self._add_result('link.created', link)
+            try:
+                os.symlink(target, link)
+            except Exception as e:
+                self._add_result('link.not-created', link, reason=e)
+            else:
+                self._add_result('link.created', link)
 
     def _link_contents(self, src_dir, dst_dir):
         """
