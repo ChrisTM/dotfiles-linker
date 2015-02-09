@@ -37,10 +37,23 @@ class Linker(object):
         self.dst_dir = os.path.abspath(dst_dir)
         self.show_progress = show_progress
 
+        self.src_exclusions = set(
+            os.path.join(self.src_dir, exclusion) for exclusion in [
+                # It's common to have the src-dir be the root of a git repo.
+                # In that case, we want to ignore the `.git` folder --- that's
+                # not useful to link.
+                '.git',
+                '.gitignore',
+            ]
+        )
+
         self.results = []  # tuples of form (result, path, reason)
 
     def run(self):
         self._link_contents(self.src_dir, self.dst_dir)
+
+    def _is_excluded_src(self, src_path):
+        return src_path in self.src_exclusions
 
     def _link(self, target, link):
         """
@@ -105,6 +118,9 @@ class Linker(object):
 
             src_path = os.path.join(src_dir, name)
             dst_path = os.path.join(dst_dir, name)
+
+            if self._is_excluded_src(src_path):
+                continue
 
             if (os.path.isdir(src_path) and
                     SUBDIR_ANNOTATION not in os.listdir(src_path)):
